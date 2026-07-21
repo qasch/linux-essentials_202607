@@ -23,6 +23,8 @@ Probiert auch gerne noch andere Möglichkeiten aus.
  !<zeichenfolge> 
  !?<zeichenfolge>
 
+ !<index>:p
+
  !$
 ```
 

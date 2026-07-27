@@ -719,8 +719,11 @@ grep "sh$" /etc/passwd | cut -d: -f1
 ```bash
 grep "sh$" /etc/passwd | cut -d: -f1 | wc -l
 ```
+
 > [!NOTE]
-> Pipelines bauen wir am besten Stück für Stück auf, wie in einem Baukastensystem. Wir untersuchen die Ausgabe eines Kommandos, nutzen die History um das Kommando erneut aufzurufen, hängen eine Pipe dran, lassen uns das Ergebnis anzeigen, nutzen die History usw.
+> Pipelines bauen wir am besten Stück für Stück auf, wie in einem Baukastensystem. Wir untersuchen die Ausgabe eines Kommandos, nutzen die History um das Kommando erneut aufzurufen, hängen eine Pipe dran, lassen uns das Ergebnis anzeigen, nutzen die History, hängen die nächste Pipe dran usw.
+
+
 
 
 

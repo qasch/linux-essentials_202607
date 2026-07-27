@@ -621,7 +621,64 @@ EOF
 
     Kurz gesagt: `<<` für mehrzeilige Textblöcke, `<<<` für einzelne Strings/Variablen.
 
-TODO /dev/null
+### Gerätedatei `/dev/null`
+
+`/dev/null` ist eine spezielle Gerätedatei (*Character Device*) unter Unix/Linux-Systemen, das alle Daten, die hineingeschrieben werden, sofort verwirft. Es wird oft als "Null-Gerät" oder als das "Schwarze Loch" eines Linux Systems bezeichent.
+
+#### Funktionsweise:
+
+Schreiben nach `/dev/null`: Alle Daten, die an `/dev/null` gesendet werden, gehen verloren – es wird nichts gespeichert. Der Schreibvorgang meldet dabei trotzdem Erfolg zurück.
+
+Lesen von `/dev/null`: Liefert sofort ein `EOF` (End of File), also keine Daten. Es gibt schlicht nichts zu lesen.
+
+#### Typische Anwendungsfälle:
+
+**Ausgaben unterdrücken**
+
+```bash
+   command > /dev/null
+```
+
+Unterdrückt die Standardausgabe (`stdout`) eines Befehls.
+
+**Fehlermeldungen verwerfen**
+
+```bash
+   command 2> /dev/null
+```
+
+Leitet nur die Fehlerausgabe (`stderr`) ins Leere.
+
+**Komplett stumm schalten**
+
+```bash
+   command > /dev/null 2>&1
+```
+
+Sowohl stdout als auch stderr werden verworfen.
+
+**Leere Eingabe erzeugen**
+
+```bash
+   command < /dev/null
+```
+
+Nützlich, wenn ein Programm eine Eingabe erwartet, aber keine benötigt wird (z. B. um interaktive Prompts zu vermeiden).
+
+**Dateien leeren, ohne sie zu löschen**
+
+```bash
+   cat /dev/null > datei.log
+```
+
+Setzt den Inhalt einer Datei auf null Byte zurück, behält aber die Datei (inkl. Rechten) bei.
+
+#### Wichtige Eigenschaften:
+
+- Gehört zur Kategorie der Character Devices (siehe `ls -l /dev/null` -> beginnt mit `c`).
+- Hat üblicherweise die Major/Minor-Nummer 1, 3.
+- Existiert auch als Konzept unter Windows (NUL) und macOS (ebenfalls `/dev/null`).
+- Belegt keinen Speicherplatz, unabhängig davon, wie viele Daten hineingeschrieben werden.
 
 ## Kommandopipelines
 

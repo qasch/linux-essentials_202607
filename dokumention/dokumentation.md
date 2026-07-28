@@ -724,9 +724,60 @@ grep "sh$" /etc/passwd | cut -d: -f1 | wc -l
 > Pipelines bauen wir am besten Stück für Stück auf, wie in einem Baukastensystem. Wir untersuchen die Ausgabe eines Kommandos, nutzen die History um das Kommando erneut aufzurufen, hängen eine Pipe dran, lassen uns das Ergebnis anzeigen, nutzen die History, hängen die nächste Pipe dran usw.
 
 
+## Verzeichnisstruktur / FHS
+
+| Verzeichnis | Bedeutung | enthält |
+| ----------- |:-------------: | --------- |
+| `/bin` | *binary* |  ausführbare Dateien, die von allen Benutzern ausgeführt werden können. Normalerweise ein *Symlink* auf `/usr/bin`. |
+| `/sbin` | *superuser binary* |  auch ausführbare Dateien, die allerdings nur von `root` genutzt werden können. Auch ein Symlink auf `/usr/sbin`. |
+| `/boot` | |  den/die Linux Kernel (`vmlinuz-6.1.0-25.amd64`), die zugehörige Initiale RAM Disk (`initrd.img-6.1.0-25-amd64`), weitere für den Bootvorgang wichtige Dateien und die Konfiguration des Bootloaders, z.B. `grub`. |
+| `/dev` | *devices* |  *Gerätedateien*, z.B. für die vorhanden Speichermedien und Partitionen, `/dev/null`, `/dev/random`, die Filedescriptoren `stdin`, `stdout`, `stderr`, Terminals etc. Dieses Verzeichnis wird automatisch vom Dienst `udev` (*Userspace Dev*) überwacht und gepflegt. |
+| `/etc` | *et cetera* / *etsy* |  systemweite Konfigurationsdateien. Diese können für gewisse Programme durch die benutzerspezifischen Konfigurationsdateien (im Heimatverzeichnis der Benutzer) überschrieben werden (`/etc/bash.bashrc` -> `~/.bashrc`). |
+| `/home` | | Heimatverzeichnisse der regulären Benutzer |
+| `/media` `/mnt` | *mount* |  Verzeichnisse für die *Mountpoints* weiterer/externer Datenträger |
+| `/opt` | *optional* | hier können Pakete ihre Dateien ablegen, die nicht über die Standardpaketquellen installiert wurden |
+| `/proc` | *processes* |  Dateien/Informationen über das laufende System: laufende Prozesse, Hardware, Kernelkonfiguration. Existiert nur im RAM, ist ein sog. *virtuelles* oder *Pseudodateisystem* |
+| `/root` | | Heimatverzeichnis des *Superusers* `root` |
+| `/sys` | *system* | ähnlich wie `/proc` bzw. eine nachträgliche Erweiterung,  vor allem Dateien/Informationen zur Hardware, auch ein *virtuelles-* bzw. *Pseudodateisystem*. |
+| `/tmp` | *temp* |  temporäre Dateien |
+| `/usr` | *Unix System Resources* |  Verzeichnisse für die ausführbaren Dateien, Libraries, Source Code, Dokumentationen etc. |
+| `/var` | *variable* |  viele wichtige Dateien wie z.B. *Logdateien* (`/var/log`), E-Mails (`/var/mail`), Cache (`/var/cache`) ... |
 
 
+## Prozesse
 
+Ein Prozess ist ein gestartetes und sich in der Auführung befindliches Programm. Ein Programm resultiert immer in mindestens einem Prozess. Prozesse laufen jeweils in einem von anderen unabhängigen "Resourcenraum", haben eine eigene PID, kennen ausschliesslich die  PPID (Parent Process ID), also die ID des Prozesses, von dem sie gestartet wurden (Elternprozess). Ansonsten wissen Prozessen nicht mehr voneinander. Prozesse sind hierarchisch organisiert. Prozesse können mit dem Kommando `kill` über Signale beeinflusst werden.
+
+### Vorder- und Hintergrundprozesse
+
+Auf der Shell kann immer nur ein einzelner Prozess im Vordergrund ausgeführt werden, die Shell wird für den Zeitraum der Ausführung *blockiert*, kann also keine anderen Kommandos verarbeiten. Prozesse können mit der Tastenkombination `STRG+Z` angehalten und in den Hintergrund geschickt werden. Mit dem Kommando `bg` kann dieser Prozess dann im Hintergrund fortgesetzt werden, `fg` holt den Prozess in den Vordergrund zurück.
+
+Wir können einen Prozess beim Start aber auch direkt in den Hintergrund schicken und starten (durch Anhängen eines `&`):
+```bash
+ kommando &
+ sleep 200 &
+```
+
+### Die Kommandos `ps`, `jobs`, `fg` und `bg`
+
+Wir können uns mit `ps` generell Prozesse anzeigen lassen, egal ob sie sich im Vorder- oder Hintergrund befinden, angehalten sind oder laufen, mit den passenden Optionen auch sämtliche laufenden Prozesse des Systems. 
+
+Mit `jobs` hingegen lassen sich nur die **Hintergrundprozesse** der aktuellen Shell anzeigen.
+
+Ein z.B. mit der Tastenkombination angehaltener und in den Hintergrund verschobener Prozess kann mit `bg` im Hintergrund fortgesetzt werden.
+
+Mit `fg` lässt sich ein Hintergrundprozess (Job) wieder in den Vordergrund holen (und starten falls angehalten).
+
+- `ps` : Anzeige aller in der aktuellen Shell laufenden Prozesse
+  - `ps -aux`: Anzeige aller laufende Prozessez auf dem System
+  - `ps aux`: Anzeige aller laufende Prozessez auf dem System
+  - `ps -ef`: auch Anzeige aller laufenden Prozesse auf dem System
+  - `ps --forest`: Prozesshirarchie (Baumstruktur) anzeigen
+- `jobs`: Anzeigen der Hintergrundprozesse
+- `fg`: letzten/aktuellen/default Job in den Vordergrund holen
+  - `fg %<jobnummer>`: Job mit Jobnummer `<jobnummer>` in den Vordergrund holen
+- `bg`: Hintergrundprozess fortsetzen
+  - `bg %<jobnummer>`: Hintergrundprozess mit Jobnummer `<jobnummer>` in fortsetzen
 
 
 

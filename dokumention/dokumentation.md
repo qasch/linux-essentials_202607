@@ -779,6 +779,198 @@ Mit `fg` lässt sich ein Hintergrundprozess (Job) wieder in den Vordergrund hole
 - `bg`: Hintergrundprozess fortsetzen
   - `bg %<jobnummer>`: Hintergrundprozess mit Jobnummer `<jobnummer>` in fortsetzen
 
+### kill
+
+ `kill` sendet, anders als der Name vermuten lässt, generell Signale an Prozesse. Es muss die PID des Prozesses angegeben werden, die Angabe des Prozessnamens funktioniert nicht.
+
+ - `kill -s <signal> <PID>`: sendet <signal> an den Prozess mit der PID <PID>
+ - `kill --signal <signal> <PID>`: sendet <signal> an Prozess mit der PID <PID>
+ - `kill -<signal> <PID>`: sendet <signal> an Prozess mit der PID <PID>
+
+`<signal>` kann sowohl die Signalnummer, als auch der Signalname, sowohl in der Form mit vorangestellten `SIG` als auch ohne sein. Es gibt also sechs Varianten zur Angabe.
+
+ Die PID eines Prozesses kann auf mehrere Arten ermittelt werden:
+```bash
+ps -ef | grep <prozessname>
+pgrep <prozessname>
+```
+
+### einige wichtige Signale
+
+- `SIGTERM` (15): Standard, falls kein bestimmtes Signal angegeben wird. Sendet eine "freundliche" Aufforderung an den Prozess, sich doch bitte zu beenden. Im Prozess selbst ist festgelegt, wie er auf das Signal reagiert, z.B. werden noch gewisse Aufräumarbeiten durchgeführt etc.
+- `SIGINT` (2): sendet eine deutlichere Aufforderung an den Prozess, sich zu beenden, wird bei der Tastenkomnination `STRG+C` (_Cancel_) gesendet
+- `SIGKILL` (9): rabiateste Methode, Signal wird nicht an den Prozess, sondern direkt an den Kernel/Scheduler gesendet, der daraufhin den entsprechenden Prozess aus seiner Liste löscht, der Prozess somit keine CPU Zeit mehr zur Verfügung gestellt bekommt und zwangsläufig beendet wird.
+- `SIGCONT` (18): führt angehaltene Prozesse fort
+- `SIGSTOP` (19): hält Prozess an und schickt ihn in den Hintergrund, kann aber nicht vom Prozess abgefangen werden, geht direkt an den Kernel
+- `SIGTSTP` (20): hält Prozess an und schickt ihn in den Hintergrund (`STRG+Z`), kann vom Prozess abgefangen werden
+
+### Prozessabhängigkeiten bzw. Terminal-unabhängige Ausführung
+
+Jeder Prozess existiert in einer hierarchischen Struktur. Jeder Prozess (außer dem Init-Prozess mit PID 1) hat einen Elternprozess, der ihn erzeugt hat.
+
+Führen wir einen Prozess in einem Terminal aus, wird die Shell zum Elternprozess des neuen Prozesses. Schliessen wir die Shell, senden das System ein `SIGHUP` an alle Prozesse, die mit dieser Shell verbunden sind, was diese (normlaerweise) beendet.
+
+Gerade wenn wir über SSH arbeiten und langwierige Prozesse wie z.B. ein Systemupgrade oder ähnliches durchführen, birgt das natürlich eine gewisse Gefahr.
+
+Es gibt jedoch mehrere Möglichkeiten, Prozesse von der weiterlaufen zu lassen, obwohl die Elternshell beendet wird.
+
+#### nohup
+
+- Ignoriert das SIGHUP-Signal
+- Leitet STDOUT und STDERR standardmäßig in die Datei `nohup.out` um
+- Der Prozess läuft weiter, auch wenn das Terminal geschlossen wird
+
+```bash
+# Einfache Ausführung
+nohup ./mein-script.sh &
+
+# Mit eigener Ausgabedatei
+nohup ./langläufiger-prozess.sh > prozess.log 2>&1 &
+```
+
+#### disown
+
+`disown` ist ein Shell-Builtin, das einen Job (Hintergrundprozess) aus der Job-Tabelle der Shell entfernt. So wird verhindert, dass ein `SIGHUP` beim Beenden der Shell an den Prozess gesendet wird.
+
+```bash
+# Prozess im Hintergrund starten
+./mein-script.sh &
+
+# Aktuellen Hintergrund-Job disownen
+disown
+
+# Spezifischen Job disownen
+disown %1
+
+# Alle Hintergrund-Jobs disownen
+disown -a
+
+# Mit laufendem Prozess: Prozess stoppen, dann disownen
+# Ctrl+Z (stoppt Prozess)
+bg          # Prozess im Hintergrund fortsetzen
+disown      # Prozess von Shell trennen
+```
+
+### pgrep
+
+Gibt anhand des übergebenen Patterns die dazu passenden PIDs aus.
+
+### pkill
+
+Nimmt im Gegensatz zu `kill` ein Pattern und keine PID entgegen, sendet Signale an **alle** Prozesse, auf die das Patterns passt. `pkill` kann praktisch sein, ist aber auch mit Vorsicht anzuwenden.
+
+### Terminal-Multiplexer
+
+Terminal-Multiplexer sind Tools, die mehrere virtuelle Terminal-Sessions innerhalb eines einzigen physischen Terminals verwalten können.
+
+So können wir in einem Terminal z.B. mehrere "Fenster" mit unterschiedlichen Shells öffnen, diese in einem Layout organisieren (Split-Screen), Sessions speichern und wiederherstellen usw.
+
+Wir können uns von einer Session trennen (*detach*) und zu einem späteren Zeitpunkt wieder verbinden (*attach*). Auch so können Prozesse unabhängig von der Shell ausgeführt werden.
+
+Es ist auch möglich, eine Session zwischen mehreren Benutzern zu teilen, um so z.B. gemeinsam auf einem System oder sogar in einer Shell zu arbeiten.
+
+Es gibt mehrere Terminal-Multiplexer:
+
+- `screen` ist der älteste Vertreter, Konfiguration etwas unkomfortabel
+- `tmux` ist der modernere Nachfolger von `screen` mit verbesserter Architektur und Funktionsumfang und Konfigurationsmöglichkeiten
+- `zellij` ist ein der modernste Terminal-Multiplexer, in Rust geschrieben und auf Benutzerfreundlichkeit optimiert (besseres UI, Floating Panes etc.)
+
+## Distributionen
+
+### Was ist eine Linux-Distribution?
+Eine **Linux-Distribution** ist im Prinzip ein komplettes Betriebssystem, das einen Linux-Kernel und zusätzlich Softwarepakete, Paketverwaltung, Systemdienste und oft eine Desktop-Umgebung beinhaltet.
+
+Eine Distribution kombiniert also:
+
+- **Linux-Kernel**: Herzstück des Systems, das die Hardware initiert und steuert und grundlegende Systemfunktionen bereitstellt.
+- **GNU-Basiswerkzeuge**: Standardprogramme für Dateiverwaltung, Shell, Systemdienste...
+- **Paketverwaltungssystem**: Installieren, Aktualisieren und Entfernen von Software (z. B. `apt`, `dnf`, `pacman`).
+- **Systemdienste**: Netzwerk, Benutzerverwaltung, Logging usw.
+- **Anwendungssoftware**: Browser, Office, Multimedia usw.
+- Optional **Desktop-Umgebung**: z. B. GNOME, KDE, XFCE.
+
+Die verschiedenen Distributionen haben jeweils eigene Paketquellen (*Repositories*) und evtl. auch Tools zur Systemverwaltung.
+
+Sie unterscheiden sich in Zielgruppe, Philosophie, Stabilität, Update-Zyklus, Standardsoftware...
+
+### Beispiele für Distributionen
+
+- **Debian** → stabil, Fokus auf FLOSS (*Free Libre Open Source Software*), oft als Server Betriebssytem eingesetzt
+- **Ubuntu** (basiert auf Debian unstable / sid ) →  benutzerfreundlich, Desktop und Server
+- **Red Hat Enterprise Linux (RHEL)** →  kommerziell, Unternehmensumgebungen (Server und Desktop), Firmen zahlen für Support
+- **Fedora** →  von Red Hat, kostenlos, aktuellste Software, Entwicklerorientiert, eher Desktop
+- **Arch Linux** →  folgt dem KISS Prinzip, nach Insatllation absolut minimalistisch, Rolling Release, eher für erfahrenere User, Desktop
+- **openSUSE** →  Desktop und Server, YaST als Admin-Tool (grafisches Tool, mit dem sämtliche administrativen Aufgaben erfüllt werden können
+
+## Release-Modelle
+
+- **Fixed Release**:  Stabile Versionen in festen Intervallen. Nur mit einer neuen Version der Distribution kommt auch neue Version von Software. Weniger aktuell, dafür stabiler. (Debian, Ubuntu, RHEL, openSUSE Leap)
+- **Rolling Release**: Kontinuierliche Updates, keine festen Versionen, aktuelle Software kommt direkt in die Repos. Sehr aktuell (*Bleeding Edge*), dafür tendentiell weniger stabil. (Arch Linux, openSUSE Tumbleweed)
+- **Hybrid**:  Kombination aus stabilen Releases und optionalen Rolling-Komponenten. (Fedora (teils), Manjaro (basiert auf Arch Linux))
+
+Release basierte Distributionen haben oft auch noch zusätzlich verschiedene interne Releases. Beispiel Debian:
+
+- **stable:** die offizielle, stabile Version, Software ist ca. 2 Jahre alt
+- **testing:** enthält Pakete, die in *unstable* waren aber noch nicht in *stable* akzeptiert wurden, wird zur nächsten *stable* Version, Software ist bis zu 1 Jahr alt
+- **unstable:** neueste Software, theoretisch instabil, Basis für Ubuntu
+
+## Supportzeitraum und LTS (Long Term Support)
+
+Die einzelnen Versionen der Release basierten Distributionen werden über einen bestimmten Zeitraum hinweg mit Updates versorgt, bis sie ihren EOL (End of Life) erreichen und keine Updates mehr bekommen.
+
+**LTS** steht für Long Term Support (Langzeit-Unterstützung). LTS-Versionen bekommen besonders lange Updates (mindestens 5 Jahre) und sind besonders für Unternehmen, Server und Systeme wichtig, die über Jahre stabil laufen sollen, ohne dass man sich um häufige Upgrades (des gesamten Systems) kümmern muss.
+
+Es gibt sogar Versionen von Ubuntu und RHEL, die über mehr als 10 Jahre lang (Sicherheits-)Updates erhalten (*ELS - Extended Lifecycle Support* bzw. *ESM - Extended Security Maintenance*), dann aber auch (teilweise) kostenpflichtig sind.
+
+## Archivierung und Komprimierung
+
+### Archivierung mit `tar`
+
+*Archivierung* bezeichnet das Zusammenfassen **mehrerer** Dateien und Verzeichnisse in eine **einzige** Datei, ohne zwingende Kompression. Dadurch bleibt die ursprüngliche Struktur der Dateien erhalten, so können mehrere Dateien einfacher gespeichert oder übertragen werden.
+
+Unter Linux wird das Kommando `tar` (*Tape Archiver*) zur Archivierung verwendet. `tar` ist ein sehr altes Programm und die Syntax (freundlich ausgedrückt) etwas gewöhnungsbedürftig. Kurzoptionen haben oft keine direkte Entsprechung zu den Langoptionen.
+
+Ein `tar`-Archiv kann man sich mit dem Kommando `cat` anzeigen lassen:
+
+![Ausgabe tar Archiv mit cat](./images/ausgabe-tar-archiv-mit-cat.png)
+
+> [!NOTE]
+> Alle numerischen Angaben hier sind im *Oktalformat*. Dies hat historische Gründe. Möchte man den Zeitstempel umrechnen, kann man sich von der BASH helfen lassen:
+> ```bash
+> echo $(( 8#14757403716 ))
+> ```
+
+Einige wichtige Optioenen zu `tar`:
+
+>[!NOTE]
+> Bei `tar` ist die Option `-f` sehr wichtig. Damit müssen wir immer den Namen des Archivs angeben, mit dem wir arbeiten wollen. Die Option `-f` erwartet zwingend ein Argument (den Namen/Pfad zu einem Archiv. Der Name muss **direkt** hinter der Option folgen.
+
+**Beispiele:**
+```bash
+tar -cvf archive.tar file1 file2    # korrekt, funktioniert
+tar -tf archive.tar                 # korrekt, funktioniert
+
+tar -cfv archive.tar file1 file2    # funktioniert NICHT
+tar -ft archive.tar                 # funktioniert NICHT
+```
+
+#### Archiv aus Dateien erstellen
+```bash
+tar -cf archive.tar file1.txt file2.txt file3.txt 
+tar --create --file archive.tar file1.txt file2.txt file3.txt 
+```
+#### Archiv aus einem Verzeichnis erstellen
+```bash
+tar -cf archive.tar /absolute/path/to/dir
+tar -cf archive.tar relativ/path/to/dir
+```
+
+
+
+
+
+
+
 
 
 

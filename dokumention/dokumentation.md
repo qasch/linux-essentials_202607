@@ -965,6 +965,314 @@ tar -cf archive.tar /absolute/path/to/dir
 tar -cf archive.tar relativ/path/to/dir
 ```
 
+> [!NOTE] 
+> Pfadangaben werden immer mit archiviert! Wir müssen uns also im Vorhinein Gedanken machen, ob wir z.B. einen relativen oder absoluten Pfad angeben.
+> Absolute Pfadangaben werden durch `tar` standardmässig in relative Pfade umgewandelt (`Removing trailing slash`).
+
+#### Dateien aus Archiv extrahieren
+```bash
+tar -xf archive.tar
+tar --extract --file archive.tar
+```
+
+#### Die Option -v / --verbose gibt eine Rückmeldung darüber, was tar macht
+
+```bash
+tar -xvf archive.tar
+tar --extract --verbose --file archive.tar
+```
+
+#### Inhalt eines Archivs anzeigen/auflisten
+```bash
+tar -tf archiv.tar
+tar --list --file archive.tar
+```
+
+#### Datei einem bestehenden Archiv hinzufügen
+
+```bash
+tar -rf archive.tar other_file.txt
+tar --append --file archive.tar other_file.txt
+```
+
+### Komprimierung
+
+Durch die Komprimierung können wir **eine einzelne** Datei mit Hilfe bestimmter Algorithmen (verlustfrei) in ihrer Grösse verkleinern.
+
+*Analogie Komprimierung:* getrocknete Handtücher, die im Wasser wieder gross werden
+
+*Analogie Archivierung:* einzelne Blumen werden zu einem Strauss gebunden
+
+Um **mehrere** Dateien oder ganze Verzeichnisse zu komprimieren, müssen wir zusätzlich im Vorfeld die *Archivierung* anwenden. Bestimmte Programme in Windows-Systemen vereinen diese beiden Konzepte unter einer Haube. Wir müssen uns jedoch merken, dass dies grundsätzlich zwei komplett verschiedene Konzepte sind.
+
+Auch unter Linux ist es möglich beide Schritte auf einmal mit dem Kommando `tar` durchzuführen, dabei ruft `tar` im Hintergrund jedoch die jeweiligen Kommandos zur Komprimierung auf.
+
+Unter Linux nutzen wir standardmässig drei verschiedene Tools zur Komprimierung: `gzip`, `bzip2` und `xz`.
+
+>[!NOTE]
+> Sowohl bei der Komprimierung als auch bei der Dekomprimierung wird die jeweilige Originaldatei nicht behalten, sondern ersetzt.
+> Dies können wir mit der Option `-k` (`--keep`) umgehen.
+
+### Vergleich der drei Komprimierungsalgorithmen
+
+Vergleich der Geschwindigkeiten und resultierenden Grössen beim Komprimieren:
+
+![vergleich-komprimierung](./images/vergleich-komprimierung.png)
+Vergleich der Geschwindigkeiten beim Dekomprimieren:
+
+![vergleich-dekomprimierung](./images/vergleich-dekomprimierung.png)
+Zusammenfassend lassen sich folgende Aussagen über die drei Komprimierungsalgorithmen treffen:
+
+- `gzip` ist am schnellsten bei der Komprimierung, die komprimierte Datei ist aber nicht besonders klein
+- `bzip2` braucht lange für die Komprimierung und die Dekomprimierung, erzeugt aber eine ziemlich kleine Datei
+- `xz` braucht ziemlich lange bei der Komprimierung, erzeugt liegt bei der Kompressionsrate zwischen den beiden anderen, ist aber sehr schnell bei der Dekomprimierung
+
+Es gibt also für alle drei bestimmte Anwendungsfälle, in denen sie ihre Stärken ausspielen können.
+
+>[!NOTE] Unser Beispiel begünstigt ältere Komprimierungsalgorithmen. In einem echten Beispiel würde `xz` neben der schnellsten Dekomprimierung auch die höchste Kompressionsrate erzielen.
+
+### Erstellen und Entpacken eines komprimierten Archivs direkt mit `tar`
+
+#### gzip komprimiertes Archiv erstellen
+```bash
+tar -czf archiv.tar.gz somdir/
+tar -czvf archiv.tar.gz somdir/     # verboser Output
+```
+
+#### bzip2 komprimiertes Archiv erstellen
+```bash
+tar -cjf archiv.tar.bz2 somdir/
+tar -czjf archiv.tar.bz2 somdir/     # verboser Output
+```
+
+#### xz komprimiertes Archiv erstellen
+```bash
+tar -cJf archiv.tar.xz somdir/
+tar -cJvf archiv.tar.xz somdir/     # verboser Output
+```
+
+#### Komprimiertes Archiv entpacken
+
+##### mit gzip komprimiertes Archiv entpacken
+```bash
+tar -xzf archiv.tar.gz
+tar -xzvf archiv.tar.gz
+```
+
+##### mit bzip2 komprimiertes Archiv entpacken
+```bash
+tar -xjf archiv.tar.bz2
+tar -xzjf archiv.tar.bz2
+```
+
+##### mit xz komprimiertes Archiv entpacken
+```bash
+tar -xJf archiv.tar.xz
+tar -xJvf archiv.tar.xz
+```
+
+##### automatisch jeweiligen Algorithmus ermitteln, Archiv dekomprimieren und Dateien extrahieren
+```bash
+tar -xf archiv.tar.gz
+tar -xf archiv.tar.bz2
+tar -xf archiv.tar.xz
+```
+
+#### Erklärung der Optionen:
+
+- `-c`, `--create`  erstellt ein neues Archiv
+- `-x`, `--extract`  entpackt ein Archiv
+- `-f`, `--file`  gibt den Dateinamen des Archivs an (immer direkt danach)
+ 
+- `-z`, `--gzip`  wendet gzip-Kompression an
+- `-j`, `--bzip2`  wendet bzip2-Kompression an
+- `-J`, `--xz`  wendet xz-Kompression an
+
+
+## Benutzerkonten
+
+### Root Acount
+
+Der Benutzer `root` ist der *SuperUser* eines Linux Systems. Er ist der einzige Benutzer, welcher volle Rechte auf das System hat, also alles darf. Er muss auf jedem System existieren, damit dieses lauffähig ist, beispielsweise um während des Bootvorgangs einzelne Dienste zu starten usw.
+
+### Reguläre Benutzer
+
+Alle *regulären* Benutzer haben **eingeschränkte** Rechte. Sie dürfen z.B. nicht alle Kommandos ausführen oder generell irgendwelche Änderungen am System vornehmen. 
+
+Im Hintergrund wird das mehr oder weniger alles über die Berechtigungen an Dateien geregelt.
+
+Reguläre Benutzer können sich am System anmelden und interaktiv Kommandos ausführen. Dazu haben sie in der `/etc/passwd` eine *Login Shell* zugewiesen.
+
+### Systembenutzer / Servicenutzer / Pseudobenutzer
+
+Es gibt eine weitere Bentuzergruppe mit eingeschränkten Rechten. Das fällt uns auf, wenn wir die Datei `/etc/passwd` inspizieren. Die Mehrzahl der Benutzer haben wir gar nicht selbst angelegt, sie wurden automatisch vom System erzeugt, als bestimmte Dienste/Services installiert wurden.
+
+Genau das ist der Sinn dieser Benutzer: So können bestimmte Dienste bzw. Prozesse mit deren Berechtigungen ausgeführt werden um die Sicherheit des Systems zu erhöhen. Ein kompromittierter Dienst erhält so also nicht direkt Zugriff auf das gesamte System.
+
+Beispiel: `www-data` für Webserver wie *Apache oder Nginx* - selbst wenn ein Angreifer den Webserver übernimmt, kann er nicht auf andere Systemdateien zugreifen.
+
+Pseudobenutzer haben keine Login-Shell, ihnen wird `/usr/sbin/nologin` zugewiesen. Sie können sich also nicht am System anmelden und Kommandos ausführen.
+
+## Benutzer und Gruppen
+
+### Benutzer anlegen mit `useradd`
+
+Mit `useradd` (auf allen Linux Systemen verfügbar) können wir Benutzer anlegen.
+
+Obwohl ein Eintrag für ein Home-Verzeichnis in der `/etc/passwd` erzeugt wird, wird dies **nicht** angelegt
+```bash
+useradd <user>
+```
+Die Option `-m` bewirkt, dass unterhalb von `/home` ein Verzeichnis mit dem Namen des Benutzers erzeugt und alle Dateien aus `/etc/skel` dorthin kopiert werden.
+```bash
+useradd -m <user>
+useradd --create-home <user>
+```
+
+Benutzer eine Login-Shell zuweisen
+```bash
+useradd -s /bin/bash <user>
+useradd --shell /bin/bash <user>
+```
+
+Kommentarfeld für den vollen Namen des Benutzers und weitere Informationen
+```bash
+useradd -c "Voller Name des Benutzers" <user>
+useradd --comment "Voller Name des Benutzers" <user>
+```
+
+Neuen User eine bestimmte Primäre Gruppe zuordnen:
+```bash
+useradd -g <primary-group> <user>
+```
+
+Neuen User einer Liste von zusätzlichen Gruppen zuordnen:
+```bash
+useradd -G <supplementary-group-1>,<supplementary-group-2> <user>
+```
+
+Standarbeispiel zum Anlegen eines Benutzers:
+```bash
+useradd -m -c "Tux Tuxedo" -s /bin/bash tux
+```
+
+### Benutzerkonfiguration ändern
+
+Mit dem Kommando `usermod` können wir die Benutzerkonfiguration nachträglich wieder ändern. Die Optionen sind denen von `useradd` sehr ähnlich. 
+
+Ändern der Login Shell von `korni` zur `ksh`:
+
+```bash
+usermod -s /usr/bin/ksh korni
+```
+
+### Passwörter
+Passwörter werden nicht in der `/etc/passwd` gespeichert, sondern in der Datei `/etc/shadow`. Dafür gibt es mindestens zwei Gründe:
+
+1. Die Datei `/etc/passwd` muss von allen Usern auf dem System lesbar sein, wir wollen aber vermeiden, dass die Passwort-Hashes auslesbar sind
+2. In der Datei `/etc/passwd` werden Informationen über die User gespeichert, in der `/etc/shadow` Informationen über Passwörter (*Separation of Concern*)
+
+Passwörter liegen sind immer gehasht und zusätzlich gesaltet, d.h. dass vor dem Hashen des Passworts eine bestimmte zufällig generierte Zeichenkette vor das Passwort geschrieben und dann der kommplette String (Salt + Passwort) gehasht wird.
+
+So wird zum einen vermieden, dass zwei gleiche Klartextpasswörter den gleichen Hash erhalten, zum anderen werden Attacken über *Rainbow Tables* (riesige Tabellen mit Hash-Werten und den dazugehörigen Klartextpasswörtern) vermieden.
+
+Das Kommando `useradd` kann selbst keine Passwörter generieren! Wir rufen dazu nach dem Erstellen eines neuen Users das Kommando `passwd` auf.
+
+>[!NOTE] 
+> Wir können dem Benutzer auch bereits beim Erzeugen ein Passwort mitgeben. 
+
+**Wichtig:** Hier muss ein für das System passender *gesaltener* HASH angegeben werden. Der Eintrag wird exakt so in die `/etc/shadow` eingetragen.
+```bash
+useradd -p "PASSWORDHASH" <user>
+useradd --password "PASSWORDHASH" <user>
+```
+
+Schwer ist das nicht wirklich - wir können dazu das Kommando `openssl` verweden:
+```bash
+openssl passwd -6 PASSWORT
+```
+
+Die Option `-6` weist `openssl` an, den für Linux empfohlenen sicheren *SHA-512* Algorithmus zu verwenden.
+
+In einem Rutsch sähe das folgendermassen aus:
+```bash
+useradd -m -c "User mit Passwort" -p $(openssl passwd -6 'My!Secret#Password') -s /bin/bash userwithpass
+```
+
+### passwd
+Das Kommando ermöglicht die Änderung von Passwörtern. Mit Root-Rechten können so die Passwörter aller Benutzer geändert werden:
+```bash
+passwd <user>
+```
+Als regulärer Benutzer kann man damit sein eigenes Paswsort ändern:
+```bash
+passwd
+```
+### chsh
+Mit `chsh` kann ein Benutzer seine Login Shell ändern bzw. kann `root` die Login Shells jedes Users ändern.
+```bash
+chsh -s /bin/bash
+```
+### adduser
+
+`adduser` ist ein Perl-Skript, welches u.a. die Kommandos  `useradd` und `passwd` ausführt. Es ist *interaktiv*, wir brauchen keine Optionen zu übergeben, bestimmte Einstellungen werden abgefragt, vor allem fragt `adduser` direkt nach einem Passwort für den neuen Benutzer. Es sind andere Default-Werte gesetzt als bei `useradd`, z.B. die `bash` als Login-Shell.
+
+Dieses Kommando ist aber standardmässig nur auf Debian-basierten Distributionen vorinstalliert.
+
+#### Relevante Dateien
+Beim Anlegen von Benutzern passiert übrigens nur folgendes:
+
+- Ein Eintrag in der `/etc/passwd` mit den Benutzerinformationen wird erzeugt
+- Das Passwort wird in die `/etc/shadow` eingetragen
+- Die primäre Gruppe wird zur `/etc/group` hinzugefügt (und eventuell andere Gruppenzugehörigkeiten angepasst)
+- In der `/etc/gshadow` wird ein Eintrag ohne Passwort erzeugt (diese Datei bzw. Gruppenpasswörter werden eh nicht genutzt)
+
+Das war's. Nichts weiter. Keine Magie, nichts im Hintergrund. Nur Veränderung von Textdateien. Das ist ein gutes Beispiel dafür, wie die Konfiguration eines Linux System generell funktioniert. 
+
+## Gruppen
+
+
+
+
+## Berechtigungen
+
+      u   g   o
+      6   2   4
+     110 010 100
+-    rw- -w- r--     1 tux tux 0 Jul 30 07:34 tuxfile
+
+# Rechte:
+
+## symbolische Rechtevergabe
+
+```
+r - read - lesen
+w - write - schreiben
+x - execute - ausführen
+
+u - user/owner - Besitzer
+g - group   - Gruppe
+o - others  - alle, die weder Besitzer noch Mitglied der Gruppe sind
+a - all - ugo
+
++ Recht hinzufügen
+- Recht entfernen
+= Rechte setzen
+```
+    
+## numerische Rechtevergabe
+
+```
+r - read - lesen            4     100
+w - write - schreiben       2     010
+x - execute - ausführen     1     001
+
+```
+
+
+
+
+
 
 
 

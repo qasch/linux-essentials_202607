@@ -1432,3 +1432,8 @@ drwxrwxrwt 8 root root 4096 Feb 20 09:30 /tmp
 
 So ist es einem regulären Benutzer nicht möglich, Dateien eines anderen Benutzers zu ändern oder zu löschen.
 
+## Links
+
+## RegEx
+
+## find
